@@ -11,15 +11,13 @@ with open('timmy_admin.txt', 'r') as f:
     TOKEN = f.read().rstrip()
 
 bot = commands.Bot(command_prefix='.')
-bot_admins = [278704257887240192, 228197649767989248]
-# channel_user_limit = 4
+bot_admins = [278704257887240192, 228197649767989248]  # people allowed to create and delete channels
 
 
 @bot.event
 async def on_ready():  # on starting bot
     print(f'We have logged in as {bot.user}')
     await bot.change_presence(activity=discord.Game(name='CreatorOfVoices'))
-
 
 
 # check decorator
@@ -46,34 +44,25 @@ async def list_cool_kids(ctx):
 
 @bot.command()
 @is_bot_admin()
-async def test_cat_split(ctx, *categories):
-    await ctx.send(categories)
-
-
-@bot.command()
-@is_bot_admin()
 async def make_team_channels(ctx, channel_user_limit, *categories):
-    # if temp_ids file exists: return
     if ts.temp_file.exists():
         await ctx.send(f'Error: Channels are already created. I have a temp file full of them.')
         return
-    category_ids = []
+
     categories_temp = []
     for category_name in categories:
         category_obj = await ctx.guild.create_category(category_name)
         categories_temp.append(category_obj)
-        category_ids.append(category_obj.id)
 
     voice_channel_ids = []
-    for i_pos, t_name in enumerate(team_names):
-        category_index = i_pos % len(categories)  # loop through categories for creation
-        new_channel = await categories_temp[category_index].create_voice_channel(t_name, user_limit=channel_user_limit)
-        # TODO: create invites for players
+    for index_pos, team_name in enumerate(team_names):
+        category_index = index_pos % len(categories)  # loop through categories for creation
+        new_channel = await categories_temp[category_index].create_voice_channel(team_name, user_limit=channel_user_limit)
+        # TODO: create invites for players?
         voice_channel_ids.append(new_channel.id)
 
-    # dump cat ids and vc ids so they can be deleted
+    # dump cat ids and vc ids so they can be deleted if the bot was shut down
     temp_data = {
-        'cat_ids': category_ids,
         'vc_ids': voice_channel_ids
     }
     ts.dump_to_json(temp_data, ts.temp_file)
@@ -84,6 +73,7 @@ async def make_team_channels(ctx, channel_user_limit, *categories):
 async def delete_team_channels(ctx):
     if not ts.temp_file.exists():
         await ctx.send(f'I dont remember making channels. There is no temp file.')
+        return
 
     category_channels = []
     temp_ids = ts.read_json(ts.temp_file)
