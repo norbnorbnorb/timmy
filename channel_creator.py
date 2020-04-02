@@ -15,7 +15,6 @@ bot_admins = [278704257887240192, 228197649767989248]
 # channel_user_limit = 4
 
 
-
 @bot.event
 async def on_ready():  # on starting bot
     print(f'We have logged in as {bot.user}')
